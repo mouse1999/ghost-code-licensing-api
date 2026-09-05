@@ -1,0 +1,8 @@
+target/
+.git/
+*.pem
+*.key
+.env
+data/
+docs/
+*.md
