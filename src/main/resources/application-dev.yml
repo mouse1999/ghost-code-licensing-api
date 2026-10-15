@@ -1,0 +1,17 @@
+# DEVELOPMENT profile (--spring.profiles.active=dev). Relaxes only what is unsafe to expose and cannot be mistaken for
+# production: plain HTTP on localhost, and a throw-away signing key when none is configured. There are NO default
+# credentials: you still create an admin token (AdminTokenTool) and a pepper (KeyGenTool), and you still need a database.
+server:
+  port: 8080
+  address: 127.0.0.1
+licensing:
+  security:
+    require-https: false
+  signing:
+    key-id: dev-ephemeral
+    allow-ephemeral: true
+  entitlement:
+    issuer: http://localhost:8080
+logging:
+  level:
+    com.interviewassistant.licensing: DEBUG

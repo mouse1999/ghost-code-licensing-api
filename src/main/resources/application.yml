@@ -1,0 +1,80 @@
+# Licensing API configuration. Every secret comes from the environment; none has a default, so a mis-configured
+# deployment refuses to start instead of running insecurely.  See README.md for the full list.
+server:
+  port: ${LICENSING_PORT:8443}
+  # Behind a TLS-terminating reverse proxy, let Tomcat trust X-Forwarded-* ONLY from these proxy addresses
+  # (then request.isSecure() and the client address reflect the real client). Set to your proxy's address.
+  forward-headers-strategy: native
+  tomcat:
+    remoteip:
+      internal-proxies: ${LICENSING_TRUSTED_PROXIES:127\.0\.0\.1|::1}
+    max-http-form-post-size: 16KB
+    max-swallow-size: 16KB
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    whitelabel:
+      enabled: false
+
+spring:
+  application:
+    name: licensing-api
+  datasource:
+    url: ${LICENSING_DB_URL}            # e.g. jdbc:postgresql://db.internal:5432/licensing
+    username: ${LICENSING_DB_USER}
+    password: ${LICENSING_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      auto-commit: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+  jackson:
+    default-property-inclusion: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: WARN
+    # Never raise these above INFO in production: request/SQL tracing could expose customer data.
+    com.interviewassistant.licensing: INFO
+
+licensing:
+  code-pepper-base64: ${LICENSING_CODE_PEPPER_BASE64:}
+  admin:
+    credentials: []          # supplied as LICENSING_ADMIN_CREDENTIALS_0_ID / _TOKEN_SHA256 / _SCOPES (see AdminTokenTool)
+  signing:
+    key-id: ${LICENSING_SIGNING_KEY_ID:}
+    private-key-file: ${LICENSING_SIGNING_PRIVATE_KEY_FILE:}
+    public-key-file: ${LICENSING_SIGNING_PUBLIC_KEY_FILE:}
+    verify-only-dir: ${LICENSING_SIGNING_VERIFY_ONLY_DIR:}
+    allow-ephemeral: false
+  security:
+    require-https: true
+    max-body-bytes: 16384
+  rate-limits:
+    activation-per-client-per-minute: ${LICENSING_RATE_ACTIVATION_PER_MIN:10}
+    activation-failures-per-client-and-email-per15-minutes: ${LICENSING_RATE_ACTIVATION_FAILURES:5}
+    validation-per-client-per-minute: ${LICENSING_RATE_VALIDATION_PER_MIN:60}
+    admin-auth-failures-per-client-per-minute: ${LICENSING_RATE_ADMIN_FAILURES_PER_MIN:10}
+  entitlement:
+    issuer: ${LICENSING_ISSUER:}      # your public https URL, e.g. https://licensing.example.com
+    ttl: ${LICENSING_ENTITLEMENT_TTL:7d}
+    proof-max-skew: 5m
+  defaults:
+    activation-window-days: 30
