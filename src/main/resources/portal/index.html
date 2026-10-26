@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>Licensing administration</title>
+<link rel="stylesheet" href="/admin/portal.css">
+</head>
+<body>
+<header class="bar">
+  <h1>Licensing administration</h1>
+  <nav id="nav" hidden>
+    <button type="button" data-view="dashboard" class="tab">Dashboard</button>
+    <button type="button" data-view="issue" class="tab">Issue</button>
+    <button type="button" data-view="licenses" class="tab">Licenses</button>
+    <button type="button" data-view="audit" class="tab">Audit</button>
+    <button type="button" id="signout" class="ghost">Sign out</button>
+  </nav>
+</header>
+<div id="banner" role="status" aria-live="polite" hidden></div>
+<main>
+
+<section id="view-login" class="card narrow">
+  <h2>Sign in</h2>
+  <p class="muted">Paste your administrator token. It is kept in this page's memory only: closing or reloading the tab signs you out, and it is never stored or put in a URL.</p>
+  <form id="login-form" autocomplete="off">
+    <label>Administrator token
+      <input id="token" type="password" autocomplete="off" spellcheck="false" required>
+    </label>
+    <button type="submit" id="login-btn">Sign in</button>
+  </form>
+  <p id="login-error" class="error" role="alert" hidden></p>
+</section>
+
+<section id="view-dashboard" hidden>
+  <div class="row"><h2>Overview</h2><button type="button" id="refresh-stats" class="ghost">Refresh</button></div>
+  <div id="stats"></div>
+</section>
+
+<section id="view-issue" hidden>
+  <div id="issue-form-wrap" class="card">
+    <h2>Issue a subscription</h2>
+    <p class="muted">Payment is taken outside this application. A record is created only when you confirm at the end of this form.</p>
+    <form id="issue-form" autocomplete="off">
+      <label>Customer email <input id="i-email" type="email" maxlength="254" required></label>
+      <fieldset>
+        <legend>Duration (counted from the customer's activation)</legend>
+        <div class="choices" id="i-presets"></div>
+        <label class="inline"><input type="radio" name="i-dur" value="custom"> Custom number of days
+          <input id="i-days" type="number" min="1" max="3650" inputmode="numeric" class="short"></label>
+        <label class="inline"><input type="radio" name="i-dur" value="date"> Fixed end date (UTC, end of that day)
+          <input id="i-date" type="date"></label>
+        <label class="inline"><input type="radio" name="i-dur" value="none"> No end date</label>
+      </fieldset>
+      <div class="grid2">
+        <label>Device limit <input id="i-devices" type="number" min="1" max="10" value="1" required></label>
+        <label>Days the customer has to activate <input id="i-window" type="number" min="1" max="365" value="30" required></label>
+      </div>
+      <fieldset>
+        <legend>Rights</legend>
+        <div class="choices" id="i-rights"></div>
+      </fieldset>
+      <label>Payment reference (optional; letters, digits and . _ : / # -) <input id="i-ref" maxlength="64"></label>
+      <label class="check"><input id="i-paid" type="checkbox"> I have verified this customer's payment outside this application. This application does not verify payments.</label>
+      <button type="submit">Review</button>
+    </form>
+    <p id="issue-error" class="error" role="alert" hidden></p>
+  </div>
+
+  <div id="issue-review" class="card" hidden>
+    <h2>Review and confirm</h2>
+    <dl id="review-list"></dl>
+    <div class="actions">
+      <button type="button" id="issue-confirm">Confirm and create license</button>
+      <button type="button" id="issue-back" class="ghost">Back</button>
+    </div>
+    <p id="review-error" class="error" role="alert" hidden></p>
+  </div>
+
+  <div id="issue-done" class="card" hidden>
+    <h2>License created</h2>
+    <p class="warn"><strong>This activation key is shown once.</strong> It is not stored in readable form and cannot be shown again. Send it to the customer through a private channel (not a shared document or public chat) and do not keep copies.</p>
+    <div class="keybox"><code id="key-value"></code><button type="button" id="key-copy">Copy</button></div>
+    <p id="copy-note" class="muted" role="status"></p>
+    <dl id="done-list"></dl>
+    <div class="actions">
+      <button type="button" id="done-open" class="ghost">Open license</button>
+      <button type="button" id="done-close">Done, clear the key</button>
+    </div>
+  </div>
+</section>
+
+<section id="view-licenses" hidden>
+  <div id="list-wrap">
+    <form id="search-form" class="card toolbar" autocomplete="off">
+      <label>Email contains <input id="s-q" maxlength="100"></label>
+      <label>Status
+        <select id="s-status">
+          <option value="">Any</option><option>PENDING</option><option>ACTIVE</option><option>EXPIRED</option>
+          <option>SUSPENDED</option><option>REVOKED</option>
+        </select>
+      </label>
+      <button type="submit">Search</button>
+    </form>
+    <div class="tablewrap"><table id="results"><thead><tr>
+      <th>Email</th><th>Status</th><th>Issued</th><th>Expires</th><th>Activation</th><th>Devices</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="actions"><button type="button" id="prev" class="ghost">Previous</button><button type="button" id="next" class="ghost">Next</button><span id="page-note" class="muted"></span></div>
+  </div>
+  <div id="detail-wrap" hidden>
+    <button type="button" id="back-list" class="ghost">&larr; Back to list</button>
+    <div id="detail" class="card"></div>
+    <div id="detail-actions" class="card actions"></div>
+    <div class="card"><h3>History</h3><ol id="history" class="history"></ol><button type="button" id="history-more" class="ghost" hidden>Older events</button></div>
+  </div>
+</section>
+
+<section id="view-audit" hidden>
+  <div class="card"><h2>Audit trail</h2><ol id="audit-list" class="history"></ol><button type="button" id="audit-more" class="ghost" hidden>Older events</button></div>
+</section>
+
+</main>
+
+<dialog id="confirm">
+  <form method="dialog" id="confirm-form">
+    <h3 id="confirm-title"></h3>
+    <p id="confirm-text"></p>
+    <div id="confirm-fields"></div>
+    <div class="actions">
+      <button type="submit" id="confirm-ok" value="ok"></button>
+      <button type="button" id="confirm-cancel" class="ghost">Cancel</button>
+    </div>
+  </form>
+</dialog>
+<script src="/admin/portal.js"></script>
+</body>
+</html>
