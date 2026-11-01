@@ -1,0 +1,1 @@
+package org.springframework.http; import java.util.Map; public class MediaType { public static final MediaType TEXT_HTML=new MediaType(); public MediaType(){} public MediaType(MediaType t, Map<String,String> p){} public static MediaType valueOf(String s){return new MediaType();} }
