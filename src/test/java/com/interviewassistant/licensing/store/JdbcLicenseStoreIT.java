@@ -220,8 +220,10 @@ class JdbcLicenseStoreIT {
             return null;
         });
         License suspended = l.suspend(T0.plusSeconds(5));
-        assertTrue(tx.inTransaction(t -> store.updateLicense(t, suspended, 0)));
-        assertFalse(tx.inTransaction(t -> store.updateLicense(t, l.revoke(T0.plusSeconds(6)), 0)), "stale version");
+        boolean suspendedUpdated = tx.inTransaction(t -> store.updateLicense(t, suspended, 0));
+        assertTrue(suspendedUpdated);
+        boolean staleUpdated = tx.inTransaction(t -> store.updateLicense(t, l.revoke(T0.plusSeconds(6)), 0));
+        assertFalse(staleUpdated, "stale version");
         License now = tx.inTransaction(t -> store.findLicense(t, l.id())).orElseThrow();
         assertEquals(LicenseStatus.SUSPENDED, now.status());
         assertEquals(1, now.version());
@@ -269,7 +271,8 @@ class JdbcLicenseStoreIT {
             return null;
         });
         tx.inTransaction(t -> store.updateLicense(t, l.revoke(T0.plusSeconds(1)), 0));
-        assertFalse(tx.inTransaction(t -> store.reserveDeviceSlot(t, l.id(), T0)));
+        boolean granted = tx.inTransaction(t -> store.reserveDeviceSlot(t, l.id(), T0));
+        assertFalse(granted);
     }
 
     @Test
